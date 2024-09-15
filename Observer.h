@@ -8,7 +8,7 @@ class Obstacle;
 class Observer {
 public:
     virtual ~Observer() {}
-    virtual void onCollision(Obstacle& obstacle);
+    virtual void CollisionUpdate(bool is_collision)=0;
 };
 
 #endif  // OBSERVER_H
