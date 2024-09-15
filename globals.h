@@ -4,8 +4,10 @@
 extern bitmap background;
 extern bitmap bee;
 extern bitmap box;
+extern bitmap bullet;
 extern float player_posx;
 extern float player_posy;
 extern int RIGHT_BOUNDARY ;
 extern int LEFT_BOUNDARY ;
 extern int GRAVITY;
+extern int spawn_interval;
