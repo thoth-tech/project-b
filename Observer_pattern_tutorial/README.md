@@ -16,9 +16,9 @@ public:
 };
 ```
 
-Subject Class
+####Subject Class
 The Subject class maintains a list of observers and notifies them of any changes.
-```
+```cpp
 class Subject {
 private:
     std::vector<Observer*> observers;
