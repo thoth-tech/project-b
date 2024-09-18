@@ -95,3 +95,18 @@ When an obstacle collides with the player, the `Player` will notify the `Obstacl
 ```cpp
 // Example: Attaching an obstacle to the player
 player.attach(&obstacle);
+```
+
+### Notifying a Specific Observer
+```cpp
+// Example: Notifying a specific observer about a collision
+player.notify(&obstacle, true);
+```
+
+### Notifying All Observers
+```cpp
+// Example: Notifying all observers about a state change
+player.notify_all_observers();
+```
+## 6.Conclusion
+In this tutorial, we explored how the Observer Pattern can be applied to manage interactions between game entities in a Splashkit project. This pattern helps in efficiently managing state changes and interactions, making the codebase more modular and easier to maintain.
