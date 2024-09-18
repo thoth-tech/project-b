@@ -14,7 +14,11 @@ public:
     virtual void CollisionUpdate() = 0;
     virtual void deceaseSpeed() = 0;
 };
+```
 
+Subject Class
+The Subject class maintains a list of observers and notifies them of any changes.
+```
 class Subject {
 private:
     std::vector<Observer*> observers;
