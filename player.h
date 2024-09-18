@@ -6,6 +6,7 @@
 #include "obstacle.h"
 #include <vector>
 #include "Observer.h"
+#include <memory>
 class Player : public Subject {
 
 public:
@@ -19,10 +20,10 @@ public:
     float get_speed() { return speed; }
     static int get_HP(){return HP;}
     static void set_HP(int hp){HP = hp;}
-    void attach(class Observer* observer) ;
+    void attach(Observer* observer) override;
     void detach(class Observer* observer) ;
     void notify(class Observer* observer, bool is_collision);
-
+    void notify_all_observers();
 private:
     float x, y, speed, width, height;
     static int HP;  
