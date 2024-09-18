@@ -7,6 +7,7 @@
 #include <vector>
 #include "Observer.h"
 class Player : public Subject {
+
 public:
     Player(float x, float y, float speed);
     void move_right();
@@ -16,12 +17,15 @@ public:
     float get_width() { return width; }
     float get_height() { return height; }
     float get_speed() { return speed; }
+    static int get_HP(){return HP;}
+    static void set_HP(int hp){HP = hp;}
     void attach(class Observer* observer) ;
     void detach(class Observer* observer) ;
     void notify(class Observer* observer, bool is_collision);
 
 private:
     float x, y, speed, width, height;
+    static int HP;  
     std::vector<Observer*> observers;
 };
 

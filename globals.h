@@ -12,3 +12,4 @@ extern int GRAVITY;
 extern int WINDOW_WIDTH ;
 extern int WINDOW_HEIGHT ;
 extern int spawn_interval;
+extern float BEE_SCALE;
