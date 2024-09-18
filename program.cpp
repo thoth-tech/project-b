@@ -18,6 +18,11 @@ float player_posy = 550.0f;
 int RIGHT_BOUNDARY = 1020;
 int LEFT_BOUNDARY = 0;
 int GRAVITY = 3;
+int spawn_interval = 60;// Spawn obstacles at a rate of 1 per second
+int WINDOW_WIDTH = 1280;
+int WINDOW_HEIGHT = 960;
+
+
 
 template <typename T, typename U>
 bool is_colliding(T& obj1, U& obj2) {
@@ -53,6 +58,38 @@ void handle_collision(T& subject, U& observer) {
     }
 }
 
+void player_move(Player* player){
+    if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
+        player->move_right();
+    }
+    if (key_down(LEFT_KEY) && player->get_x() >= LEFT_BOUNDARY) {
+        player->move_left();
+    }
+}
+void Spawn_obstacle(std::vector<Obstacle>* obstacles,Player* player,int& spawn_timer){
+    spawn_timer++;
+    if (spawn_timer >= spawn_interval)
+    {
+        spawn_timer = 0;
+        int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
+        Obstacle newObstacle(spawn_x, 0,2);
+        obstacles->push_back(newObstacle);
+        player->attach(&newObstacle); // Attach player observer to new obstacle
+    }
+}
+
+void render(std::vector<Obstacle>& obstacles,Player& player){
+    //redrawing the bitmap after every clear background and bee
+    draw_bitmap(background, 0 , 0 , option_to_screen());
+    draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
+
+    // Update and draw obstacles
+    for (Obstacle& obstacle : obstacles) {
+        obstacle.update();
+        obstacle.draw();
+        handle_collision(player, obstacle);
+    }
+}
 
 int main()
 {
@@ -62,7 +99,6 @@ int main()
     std::vector<Obstacle> obstacles; // list of obstacle
 
     // Spawn obstacles at a rate of 1 per second
-    int spawn_interval = 60; // 60 frames per second
     int spawn_timer = 0;
     
     while (!quit_requested())
@@ -70,36 +106,13 @@ int main()
         process_events();
         clear_screen();
         
-         if (key_down(RIGHT_KEY) && player.get_x() <= RIGHT_BOUNDARY) {
-            player.move_right();
-        }
-        if (key_down(LEFT_KEY) && player.get_x() >= LEFT_BOUNDARY) {
-            player.move_left();
-        }
+        player_move(&player);
         
 
         // Spawn obstacle at a random x-coordinate
-        spawn_timer++;
-        if (spawn_timer >= spawn_interval)
-        {
-            spawn_timer = 0;
-            int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
-            Obstacle newObstacle(spawn_x, 0,2);
-            obstacles.push_back(newObstacle);
-            player.attach(&newObstacle); // Attach player observer to new obstacle
-        }
-                
+        Spawn_obstacle(&obstacles,&player,spawn_timer);
 
-        //redrawing the bitmap after every clear background and bee
-        draw_bitmap(background, 0 , 0 , option_to_screen());
-        draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
-
-        // Update and draw obstacles
-        for (Obstacle& obstacle : obstacles) {
-            obstacle.update();
-            obstacle.draw();
-            handle_collision(player, obstacle);
-        }
+        render(obstacles,player);
         refresh_screen(60);
     }
 }
