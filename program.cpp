@@ -14,14 +14,15 @@
 
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
-bitmap box = bitmap_named("images/box.png");
-bitmap bullet = bitmap_named("images/bullet.png");
-float player_posx = 480.0f;
-float player_posy = 550.0f;
-int RIGHT_BOUNDARY = 1020;
+bitmap box = bitmap_named("images/raindrop2.png");
+bitmap bullet = bitmap_named("images/pollen.png");
+float player_posx = 550.0f;
+float player_posy = 650.0f;
+int RIGHT_BOUNDARY = 1200;
 int LEFT_BOUNDARY = 0;
 int GRAVITY = 3;
 int spawn_interval = 60;// Spawn obstacles at a rate of 1 per second
+float BEE_SCALE = 0.6;
 
 template <typename T, typename U>
 bool is_colliding(T& obj1, U& obj2) {
@@ -79,8 +80,19 @@ void Spawn_obstacle(std::vector<Obstacle>* obstacles,Player* player,int& spawn_t
 
 void render(std::vector<Obstacle>& obstacles,Player& player){
     //redrawing the bitmap after every clear background and bee
-    draw_bitmap(background, 0 , 0 , option_to_screen());
-    draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
+    double center_x = player.get_x()+(player.get_width()/2);
+    double center_y = player.get_y()+(player.get_height()/2);
+    draw_bitmap(background, 0, 0, option_to_screen());
+    drawing_options scale_options = option_scale_bmp(BEE_SCALE+0.1, BEE_SCALE+0.1); // Scale to 70% of original size
+    draw_bitmap(bee, player.get_x()-50, player.get_y()-50,scale_options);
+
+    // Get the circle that encompasses the scaled bitmap
+
+    point_2d bee_position = point_at(center_x,center_y);
+    circle scaled_bee_circle = bitmap_cell_circle(bee, bee_position,BEE_SCALE);
+
+    // Draw the circle for debugging
+    draw_circle(COLOR_RED,scaled_bee_circle); 
 
     // Update and draw obstacles
     for (Obstacle& obstacle : obstacles) {
@@ -113,7 +125,7 @@ int main()
         player_move(&player);
         // Shoot bullets when spacebar is pressed
         if (key_typed(SPACE_KEY)) {
-            point_2d origin = point_at(player.get_x(), player.get_y()); // Adjust based on player sprite size
+            point_2d origin = point_at(player.get_x()-20+player.get_width()/2, player.get_y()-20+player.get_height()/2); // Adjust based on player sprite size
             vector_2d direction = vector_to(0, -1); // Shoot upwards
             int bulletCount = 5;
             float spreadAngle = 45 * (std::atan(1) * 4 / 180); // 45 degrees in radians

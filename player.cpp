@@ -7,8 +7,8 @@ Player::Player(float x, float y, float speed) {
     this->x = x;
     this->y = y;
     this->speed = speed;
-    this->width = bitmap_width(bee); // Assuming 'bee' is the bitmap for the player
-    this->height = bitmap_height(bee);
+    this->width = bitmap_width(bee)*BEE_SCALE; // Assuming 'bee' is the bitmap for the player
+    this->height = bitmap_height(bee)*BEE_SCALE;
 }
 
 void Player::move_right() {

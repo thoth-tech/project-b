@@ -32,7 +32,7 @@
         sprite bullet_sprite = create_sprite(bullet);
 
         // Scale the sprite
-        sprite_set_scale(bullet_sprite,0.2); // Scale by 50%
+        //sprite_set_scale(bullet_sprite,0.2); // Scale by 50%
         
         sprite_set_position(bullet_sprite, origin);
         
