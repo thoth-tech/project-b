@@ -141,8 +141,16 @@ int main()
                 draw_sprite(*it);
                 
                 // Debug: Draw a red circle around each bullet
+                // After updating the bullet sprite in your main loop
                 point_2d bullet_pos = sprite_position(*it);
-                fill_circle(COLOR_RED, bullet_pos.x+100, bullet_pos.y+180, 5);
+
+                // Get the dimensions of the bullet bitmap
+                float bullet_width = bitmap_width(bullet); // Get the bitmap width
+                float bullet_height = bitmap_height(bullet); // Get the bitmap height
+
+                // Draw the red circle at the center of the bullet sprite
+                fill_circle(COLOR_RED, bullet_pos.x + bullet_width / 2, bullet_pos.y + bullet_height / 2, 5);
+
                 
                 ++it;
             }
