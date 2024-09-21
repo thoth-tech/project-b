@@ -159,10 +159,18 @@ int main()
                 // Get the dimensions of the bullet bitmap
                 float bullet_width = bitmap_width(bullet); // Get the bitmap width
                 float bullet_height = bitmap_height(bullet); // Get the bitmap height
+                double center_x = bullet_pos.x+bullet_width / 2;
+                double center_y = bullet_pos.y+bullet_height / 2;
 
                 // Draw the red circle at the center of the bullet sprite
-                fill_circle(COLOR_RED, bullet_pos.x + bullet_width / 2, bullet_pos.y + bullet_height / 2, 5);
+                fill_circle(COLOR_RED, center_x, center_y, 5);
 
+                // Get the circle that encompasses the scaled bitmap
+                point_2d bullet_position = point_at(center_x,center_y);
+                circle scaled_bullet_circle = bitmap_cell_circle(bullet, bullet_position,1);
+
+                // Draw the circle for debugging
+                draw_circle(COLOR_RED,scaled_bullet_circle); 
                 
                 ++it;
             }
