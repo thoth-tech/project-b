@@ -9,6 +9,7 @@
 #include "Subject.h"
 #include <iostream>
 #include <memory>
+#include "GameManager.h"
 //skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
@@ -121,14 +122,13 @@ void player_move(Player* player) {
     }
 }
 
-void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer) {
+void Spawn_obstacle(GameManager& gameManager, int& spawn_timer) {
     spawn_timer++;
     if (spawn_timer >= spawn_interval) {
         spawn_timer = 0;
         int spawn_x = rand() % RIGHT_BOUNDARY;  // Random x-coordinate between 0 and RIGHT_BOUNDARY
         auto newObstacle = std::make_unique<Obstacle>(spawn_x, 0, 2);
-        player->attach(newObstacle.get());  // Attach the newly created obstacle
-        obstacles.push_back(std::move(newObstacle));  // Move the smart pointer into the vector
+        gameManager.addObstacle(newObstacle);
     }
 }
 
@@ -165,7 +165,10 @@ int main() {
     hide_mouse();  // Hide mouse while cursor is over the game window
     Player player(player_posx, player_posy, 10.0f);  // Initialize player
     std::vector<std::unique_ptr<Obstacle>> obstacles;  // List of obstacles
-    
+    // Create game manager and add game objects
+    GameManager gameManager;
+    gameManager.setPlayer(&player);
+
     // Timer for obstacle spawning
     int spawn_timer = 0;
 
