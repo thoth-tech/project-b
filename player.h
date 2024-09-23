@@ -20,14 +20,15 @@ public:
     float get_speed() { return speed; }
     static int get_HP(){return HP;}
     static void set_HP(int hp){HP = hp;}
-    void attach(Observer* observer) override;
+    void attach(std::shared_ptr<Observer> observer) override;
     void detach(class Observer* observer) ;
     void notify(class Observer* observer, bool is_collision);
     void notify_all_observers();
 private:
     float x, y, speed, width, height;
     static int HP;  
-    std::vector<Observer*> observers;
+    std::vector<std::shared_ptr<Observer>> observers;
+
 };
 
 #endif  // PLAYER_H

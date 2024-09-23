@@ -27,16 +27,16 @@ void Player::move_left() {
     
 }
 
-void Player::attach(Observer* observer) {
+void Player::attach(std::shared_ptr<Observer> observer) {
     observers.push_back(observer);
 }
 
 void Player::detach(Observer* observer) {
-    auto it = std::remove(observers.begin(), observers.end(), observer);
-    if (it != observers.end()) {
-        std::cout << "Detaching observer" << std::endl;
-        observers.erase(it, observers.end());
-    }
+    auto it = std::remove_if(observers.begin(), observers.end(),
+                             [&observer](const std::shared_ptr<Observer>& o) {
+                                 return o.get() == observer;  // Compare the raw pointer
+                             });
+    observers.erase(it, observers.end());
 }
 
 
@@ -45,12 +45,13 @@ void Player::notify(Observer* observer, bool is_collision) {
 }
 
 void Player::notify_all_observers() {
-    std::cout << "Notifying all observers..." << std::endl;
-    for (Observer* observer : observers) {
-        if (observer == nullptr) {
+    //std::cout << "Notifying all observers..." << std::endl;
+    for (auto& observer : observers) {
+        if (!observer) {
             std::cout << "Observer is null!" << std::endl;
             continue;  // Skip null observers
         }
-        observer->deceaseSpeed(1); 
+        observer->deceaseSpeed(1);
     }
 }
+

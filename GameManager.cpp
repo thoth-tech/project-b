@@ -10,28 +10,43 @@ void GameManager::setPlayer(Player* player) {
     this->player = player;
 }
 
-void GameManager::addObstacle(Obstacle* obstacle) {
-    obstacles.push_back(std::move(obstacle));
-    player->attach(obstacle.get());  // Attach the newly created obstacle
+void GameManager::addObstacle(std::shared_ptr<Obstacle> obstacle_ptr) {
+    obstacles.push_back(obstacle_ptr);
+    player->attach(obstacle_ptr);  // Use shared_ptr instead of raw pointer
 }
 
 void GameManager::checkCollisions() {
     if (player == nullptr) return;
     
-    for (auto* obstacle : obstacles) {
-        if (player->get_x() < obstacle->get_x() + obstacle->get_width() &&
-            player->get_x() + player->get_width() > obstacle->get_x() &&
-            player->get_y() < obstacle->get_y() + obstacle->get_height() &&
-            player->get_y() + player->get_height() > obstacle->get_y()) 
+    for (const auto& obstacle_ptr : obstacles) {
+        Obstacle& obstacle = *obstacle_ptr;
+        if (player->get_x() < obstacle.get_x() + obstacle.get_width() &&
+            player->get_x() + player->get_width() > obstacle.get_x() &&
+            player->get_y() < obstacle.get_y() + obstacle.get_height() &&
+            player->get_y() + player->get_height() > obstacle.get_y()) 
         {
             // Notify player and obstacle about the collision
-            player->notify(obstacle, true);  // The player has collided with the obstacle
+            if (!obstacle.get_collision()) { // Collision started
+                player->notify(&obstacle, true);
+                Player::set_HP(Player::get_HP()-1); // Decrease player health on collision
+            }
+            draw_text("Collision detected!", COLOR_BLACK, "Arial", 24, player->get_x() + 10, player->get_y() - 50);
+        }
+        else {
+            if (obstacle.get_collision()) { // Collision ended
+                player->notify(&obstacle, false);
+            }
         }
     }
 }
 
 void GameManager::updateGameObjects() {
-    for (auto* obstacle : obstacles) {
-        obstacle->update();
+    for (const auto& obstacle_ptr : obstacles) {
+        Obstacle& obstacle = *obstacle_ptr;
+        obstacle.update();
+        obstacle.draw();
     }
 }
+
+
+
