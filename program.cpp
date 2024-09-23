@@ -5,8 +5,8 @@
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
-#include "Observer.h"
-#include "Subject.h"
+#include "RAIN.h"
+#include "BEE_PLAYER.h"
 #include <iostream>
 #include <memory>
 #include "GameManager.h"
@@ -67,7 +67,7 @@ void display_start_screen() {
 
 void check_game_over(GameManager& gameManager,Player& player) {
     if (Player::get_HP() == 1) {
-        player.notify_all_observers();
+        player.notify_all_RAINs();
     }
     else if (Player::get_HP() <= 0) {
         game_over = true;
