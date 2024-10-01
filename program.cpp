@@ -8,6 +8,7 @@
 #include "Observer.h"
 #include "Subject.h"
 #include <iostream>
+#include <memory>
 //skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
@@ -34,9 +35,9 @@ void update_timer();
 void display_timer();
 void display_start_screen();
 void player_move(Player* player);
-void Spawn_obstacle(std::vector<Obstacle>* obstacles, Player* player, int& spawn_timer);
-void render(std::vector<Obstacle>& obstacles, Player& player);
-void check_game_over();
+void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer);
+void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player);
+void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player);
 void display_game_over_screen();
 
 void start_game() {
@@ -63,8 +64,11 @@ void display_start_screen() {
     draw_text("Press SPACE to Start", COLOR_BLACK, "Arial", 200, 550, 200);
 }
 
-void check_game_over(std::vector<Obstacle>& obstacles) {
-    if (Player::get_HP() <= 0) {
+void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player) {
+    if (Player::get_HP() == 1) {
+        player.notify_all_observers();
+    }
+    else if (Player::get_HP() <= 0) {
         game_over = true;
         game_started = false;  // Stop the game
         obstacles.clear(); 
@@ -117,18 +121,19 @@ void player_move(Player* player) {
     }
 }
 
-void Spawn_obstacle(std::vector<Obstacle>* obstacles, Player* player, int& spawn_timer) {
+void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer) {
     spawn_timer++;
     if (spawn_timer >= spawn_interval) {
         spawn_timer = 0;
         int spawn_x = rand() % RIGHT_BOUNDARY;  // Random x-coordinate between 0 and RIGHT_BOUNDARY
-        Obstacle newObstacle(spawn_x, 0, 2);
-        obstacles->push_back(newObstacle);
-        player->attach(&newObstacle);  // Attach player observer to new obstacle
+        auto newObstacle = std::make_unique<Obstacle>(spawn_x, 0, 2);
+        player->attach(newObstacle.get());  // Attach the newly created obstacle
+        obstacles.push_back(std::move(newObstacle));  // Move the smart pointer into the vector
     }
 }
 
-void render(std::vector<Obstacle>& obstacles, Player& player) {
+
+void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
     // Redrawing the bitmap after every clear background and bee
     double center_x = player.get_x()+(player.get_width()/2);
     double center_y = player.get_y()+(player.get_height()/2);
@@ -145,7 +150,9 @@ void render(std::vector<Obstacle>& obstacles, Player& player) {
     draw_circle(COLOR_RED,scaled_bee_circle); 
 
     // Update and draw obstacles
-    for (Obstacle& obstacle : obstacles) {
+    for (const auto& obstacle_ptr : obstacles) {
+        // Dereference the unique_ptr to access the Obstacle object
+        Obstacle& obstacle = *obstacle_ptr;
         obstacle.update();
         obstacle.draw();
         handle_collision(player, obstacle);
@@ -157,7 +164,7 @@ int main() {
     open_window("BeeFall", WINDOW_WIDTH, WINDOW_HEIGHT);  // Named window beefall and window size
     hide_mouse();  // Hide mouse while cursor is over the game window
     Player player(player_posx, player_posy, 10.0f);  // Initialize player
-    std::vector<Obstacle> obstacles;  // List of obstacles
+    std::vector<std::unique_ptr<Obstacle>> obstacles;  // List of obstacles
     
     // Timer for obstacle spawning
     int spawn_timer = 0;
@@ -196,7 +203,7 @@ int main() {
         player_move(&player);
 
         // Spawn obstacles
-        Spawn_obstacle(&obstacles, &player, spawn_timer);
+        Spawn_obstacle(obstacles, &player, spawn_timer);
 
         // Render game objects
         render(obstacles, player);
@@ -204,7 +211,7 @@ int main() {
         // Update game elements
         update_timer();
         display_timer();
-        check_game_over(obstacles);
+        check_game_over(obstacles,player);
 
         refresh_screen(60);
     }
