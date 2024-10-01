@@ -2,14 +2,16 @@
 #include <splashkit.h>
 #include "globals.h"
 #include <iostream>
-
+#include <algorithm>
 Player::Player(float x, float y, float speed) {
     this->x = x;
     this->y = y;
     this->speed = speed;
-    this->width = bitmap_width(bee); // Assuming 'bee' is the bitmap for the player
-    this->height = bitmap_height(bee);
+    this->width = bitmap_width(bee)*BEE_SCALE; // Assuming 'bee' is the bitmap for the player
+    this->height = bitmap_height(bee)*BEE_SCALE;
 }
+
+int Player::HP = 3;  // Initialize the static HP variable
 
 void Player::move_right() {
     
@@ -22,6 +24,14 @@ void Player::move_left() {
     
 }
 
-void Player::onCollision(Obstacle& obstacle) {
-    std::cout << "Bee touched the box!" << std::endl;
+void Player::attach(Observer* observer) {
+    observers.push_back(observer);
+}
+
+void Player::detach(Observer* observer) {
+    observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end());
+}
+
+void Player::notify(Observer* observer, bool is_collision) {
+    observer->CollisionUpdate(is_collision); // Call onCollision on the observer, passing this obstacle
 }
