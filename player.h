@@ -2,12 +2,12 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Subject.h"
+#include "BEE_PLAYER.h"
 #include "obstacle.h"
 #include <vector>
-#include "Observer.h"
+#include "RAIN.h"
 #include <memory>
-class Player : public Subject {
+class Player : public BEE_PLAYER {
 
 public:
     Player(float x, float y, float speed);
@@ -20,14 +20,15 @@ public:
     float get_speed() { return speed; }
     static int get_HP(){return HP;}
     static void set_HP(int hp){HP = hp;}
-    void attach(Observer* observer) override;
-    void detach(class Observer* observer) ;
-    void notify(class Observer* observer, bool is_collision);
-    void notify_all_observers();
+    void attach(std::shared_ptr<RAIN> RAIN) override;
+    void detach(class RAIN* Rain) ;
+    void notify(class RAIN* RAIN, bool is_collision);
+    void notify_all_RAINs();
 private:
     float x, y, speed, width, height;
     static int HP;  
-    std::vector<Observer*> observers;
+    std::vector<std::shared_ptr<RAIN>> RAINs;
+
 };
 
 #endif  // PLAYER_H
