@@ -6,7 +6,9 @@
 #include "obstacle.h"
 #include <vector>
 #include "Observer.h"
+#include <memory>
 class Player : public Subject {
+
 public:
     Player(float x, float y, float speed);
     void move_right();
@@ -16,12 +18,15 @@ public:
     float get_width() { return width; }
     float get_height() { return height; }
     float get_speed() { return speed; }
-    void attach(class Observer* observer) ;
+    static int get_HP(){return HP;}
+    static void set_HP(int hp){HP = hp;}
+    void attach(Observer* observer) override;
     void detach(class Observer* observer) ;
     void notify(class Observer* observer, bool is_collision);
-
+    void notify_all_observers();
 private:
     float x, y, speed, width, height;
+    static int HP;  
     std::vector<Observer*> observers;
 };
 
