@@ -1,25 +1,29 @@
 // import
 #include "splashkit.h"
 #include "globals.h" // <- added this import
-//#include <graphics.h>
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
 #include "Observer.h"
 #include "Subject.h"
 #include <iostream>
+#include <vector>
 #include <memory>
-//skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
+#include <cmath>
 
+// Bitmap declarations
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
 bitmap box = bitmap_named("images/box.png");
-float player_posx = 550.0f;
-float player_posy = 650.0f;
-int RIGHT_BOUNDARY = 1200;
+bitmap bullet = bitmap_named("images/bullet.png");
+
+// Game settings
+float player_posx = 480.0f;
+float player_posy = 550.0f;
+int RIGHT_BOUNDARY = 1020;
 int LEFT_BOUNDARY = 0;
 int GRAVITY = 3;
-int spawn_interval = 60;// Spawn obstacles at a rate of 1 per second
+int spawn_interval = 60; // Spawn obstacles at a rate of 1 per second
 int WINDOW_WIDTH = 1280;
 int WINDOW_HEIGHT = 960;
 float BEE_SCALE = 0.6;
@@ -37,7 +41,7 @@ void display_start_screen();
 void player_move(Player* player);
 void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer);
 void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player);
-void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player);
+void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player);
 void display_game_over_screen();
 
 void start_game() {
@@ -60,15 +64,13 @@ void display_timer() {
 }
 
 void display_start_screen() {
-
     draw_text("Press SPACE to Start", COLOR_BLACK, "Arial", 200, 550, 200);
 }
 
-void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player) {
+void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
     if (Player::get_HP() == 1) {
         player.notify_all_observers();
-    }
-    else if (Player::get_HP() <= 0) {
+    } else if (Player::get_HP() <= 0) {
         game_over = true;
         game_started = false;  // Stop the game
         obstacles.clear(); 
@@ -132,22 +134,11 @@ void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* p
     }
 }
 
-
 void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
     // Redrawing the bitmap after every clear background and bee
-    double center_x = player.get_x()+(player.get_width()/2);
-    double center_y = player.get_y()+(player.get_height()/2);
     draw_bitmap(background, 0, 0, option_to_screen());
-    drawing_options scale_options = option_scale_bmp(BEE_SCALE+0.1, BEE_SCALE+0.1); // Scale to 70% of original size
-    draw_bitmap(bee, player.get_x()-50, player.get_y()-50,scale_options);
-
-    // Get the circle that encompasses the scaled bitmap
-
-    point_2d bee_position = point_at(center_x,center_y);
-    circle scaled_bee_circle = bitmap_cell_circle(bee, bee_position,BEE_SCALE);
-    
-    // Draw the circle for debugging
-    draw_circle(COLOR_RED,scaled_bee_circle); 
+    drawing_options scale_options = option_scale_bmp(BEE_SCALE + 0.1, BEE_SCALE + 0.1); // Scale to 70% of original size
+    draw_bitmap(bee, player.get_x(), player.get_y(), scale_options);
 
     // Update and draw obstacles
     for (const auto& obstacle_ptr : obstacles) {
@@ -158,7 +149,6 @@ void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
         handle_collision(player, obstacle);
     }
 }
-
 
 int main() {
     open_window("BeeFall", WINDOW_WIDTH, WINDOW_HEIGHT);  // Named window beefall and window size
@@ -178,11 +168,10 @@ int main() {
 
         if (!game_started) {
             draw_bitmap(background, 0, 0, option_to_screen());
-            drawing_options scale_options = option_scale_bmp(BEE_SCALE+0.1, BEE_SCALE+0.1); // Scale to 40% of original size
-            draw_bitmap(bee, player.get_x()-50, player.get_y()-50,scale_options);
+            drawing_options scale_options = option_scale_bmp(BEE_SCALE + 0.1, BEE_SCALE + 0.1); // Scale to 40% of original size
+            draw_bitmap(bee, player.get_x() - 50, player.get_y() - 50, scale_options);
             display_start_screen();
             if (key_down(SPACE_KEY)) {
-                
                 start_game();
             }
             refresh_screen(60);
@@ -190,9 +179,7 @@ int main() {
         }
 
         if (game_over) {
-            
             display_game_over_screen();
-            
             if (key_down(SPACE_KEY)) {
                 start_game();  // Restart game
             }
@@ -211,7 +198,7 @@ int main() {
         // Update game elements
         update_timer();
         display_timer();
-        check_game_over(obstacles,player);
+        check_game_over(obstacles, player);
 
         refresh_screen(60);
     }
