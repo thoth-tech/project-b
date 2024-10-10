@@ -1,25 +1,29 @@
 // import
 #include "splashkit.h"
 #include "globals.h" // <- added this import
-//#include <graphics.h>
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
 #include "Observer.h"
 #include "Subject.h"
-#include <iostream>
 #include <memory>
-//skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
+#include <iostream>
+#include "bullet_factory.h"
+#include <vector>
+#include <cmath>
+//skm g++ program.cpp player.cpp obstacle.cpp bullet_factory.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
-bitmap box = bitmap_named("images/box.png");
+bitmap box = bitmap_named("images/raindrop2.png");
+bitmap bullet = bitmap_named("images/pollen.png");
 float player_posx = 550.0f;
 float player_posy = 650.0f;
 int RIGHT_BOUNDARY = 1200;
 int LEFT_BOUNDARY = 0;
 int GRAVITY = 3;
 int spawn_interval = 60;// Spawn obstacles at a rate of 1 per second
+float BEE_SCALE = 0.6;
 int WINDOW_WIDTH = 1280;
 int WINDOW_HEIGHT = 960;
 float BEE_SCALE = 0.6;
@@ -112,7 +116,7 @@ void handle_collision(T& subject, U& observer) {
     }
 }
 
-void player_move(Player* player) {
+void player_move(Player* player){
     if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
         player->move_right();
     }
