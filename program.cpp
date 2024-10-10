@@ -57,38 +57,38 @@ void handle_collision(T& subject, U& observer) {
     }
 }
 
-void player_move(Player* player){
-    if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
-        player->move_right();
-    }
-    if (key_down(LEFT_KEY) && player->get_x() >= LEFT_BOUNDARY) {
-        player->move_left();
-    }
-}
-void Spawn_obstacle(std::vector<Obstacle>* obstacles,Player* player,int& spawn_timer){
-    spawn_timer++;
-    if (spawn_timer >= spawn_interval)
-    {
-        spawn_timer = 0;
-        int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
-        Obstacle newObstacle(spawn_x, 0,2);
-        obstacles->push_back(newObstacle);
-        player->attach(&newObstacle); // Attach player observer to new obstacle
-    }
-}
+// void player_move(Player* player){
+//     if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
+//         player->move_right();
+//     }
+//     if (key_down(LEFT_KEY) && player->get_x() >= LEFT_BOUNDARY) {
+//         player->move_left();
+//     }
+// }
+// void Spawn_obstacle(std::vector<Obstacle>* obstacles,Player* player,int& spawn_timer){
+//     spawn_timer++;
+//     if (spawn_timer >= spawn_interval)
+//     {
+//         spawn_timer = 0;
+//         int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
+//         Obstacle newObstacle(spawn_x, 0,2);
+//         obstacles->push_back(newObstacle);
+//         player->attach(&newObstacle); // Attach player observer to new obstacle
+//     }
+// }
 
-void render(std::vector<Obstacle>& obstacles,Player& player){
-    //redrawing the bitmap after every clear background and bee
-    draw_bitmap(background, 0 , 0 , option_to_screen());
-    draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
+// void render(std::vector<Obstacle>& obstacles,Player& player){
+//     //redrawing the bitmap after every clear background and bee
+//     draw_bitmap(background, 0 , 0 , option_to_screen());
+//     draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
 
-    // Update and draw obstacles
-    for (Obstacle& obstacle : obstacles) {
-        obstacle.update();
-        obstacle.draw();
-        handle_collision(player, obstacle);
-    }
-}
+//     // Update and draw obstacles
+//     for (Obstacle& obstacle : obstacles) {
+//         obstacle.update();
+//         obstacle.draw();
+//         handle_collision(player, obstacle);
+//     }
+// }
 
 int main()
 {
@@ -110,7 +110,14 @@ int main()
     {
         process_events();
         clear_screen();
-        player_move(&player);
+        
+        if (key_down(RIGHT_KEY) && player.get_x() <= RIGHT_BOUNDARY) {
+            player.move_right();
+        }
+        if (key_down(LEFT_KEY) && player.get_x() >= LEFT_BOUNDARY) {
+            player.move_left();
+        }
+        
         // Shoot bullets when spacebar is pressed
         if (key_typed(SPACE_KEY)) {
             point_2d origin = point_at(player.get_x(), player.get_y()); // Adjust based on player sprite size
@@ -125,9 +132,26 @@ int main()
         }
 
         // Spawn obstacle at a random x-coordinate
-        Spawn_obstacle(&obstacles,&player,spawn_timer);
+        spawn_timer++;
+        if (spawn_timer >= spawn_interval)
+        {
+            spawn_timer = 0;
+            int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
+            Obstacle newObstacle(spawn_x, 0,2);
+            obstacles.push_back(newObstacle);
+            player.attach(&newObstacle); // Attach player observer to new obstacle
+        }
 
-        render(obstacles,player);
+        //redrawing the bitmap after every clear background and bee
+        draw_bitmap(background, 0 , 0 , option_to_screen());
+        draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
+
+        // Update and draw obstacles
+        for (Obstacle& obstacle : obstacles) {
+            obstacle.update();
+            obstacle.draw();
+            handle_collision(player, obstacle);
+        }
 
         // Update and draw bullets
         for (auto it = bullets.begin(); it != bullets.end();) {
