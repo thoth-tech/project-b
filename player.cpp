@@ -27,30 +27,31 @@ void Player::move_left() {
     
 }
 
-void Player::attach(Observer* observer) {
-    observers.push_back(observer);
+void Player::attach(std::shared_ptr<RAIN> RAIN) {
+    RAINs.push_back(RAIN);
 }
 
-void Player::detach(Observer* observer) {
-    auto it = std::remove(observers.begin(), observers.end(), observer);
-    if (it != observers.end()) {
-        std::cout << "Detaching observer" << std::endl;
-        observers.erase(it, observers.end());
-    }
+void Player::detach(RAIN* Rain) {
+    auto it = std::remove_if(RAINs.begin(), RAINs.end(),
+                             [&Rain](const std::shared_ptr<RAIN>& o) {
+                                 return o.get() == Rain;  // Compare the raw pointer
+                             });
+    RAINs.erase(it, RAINs.end());
 }
 
 
-void Player::notify(Observer* observer, bool is_collision) {
-    observer->CollisionUpdate(is_collision); // Call onCollision on the observer, passing this obstacle
+void Player::notify(RAIN* RAIN, bool is_collision) {
+    RAIN->CollisionUpdate(is_collision); // Call onCollision on the RAIN, passing this obstacle
 }
 
-void Player::notify_all_observers() {
-    std::cout << "Notifying all observers..." << std::endl;
-    for (Observer* observer : observers) {
-        if (observer == nullptr) {
-            std::cout << "Observer is null!" << std::endl;
-            continue;  // Skip null observers
+void Player::notify_all_RAINs() {
+    //std::cout << "Notifying all RAINs..." << std::endl;
+    for (auto& RAIN : RAINs) {
+        if (!RAIN) {
+            std::cout << "RAIN is null!" << std::endl;
+            continue;  // Skip null RAINs
         }
-        observer->deceaseSpeed(1); 
+        RAIN->deceaseSpeed(1);
     }
 }
+

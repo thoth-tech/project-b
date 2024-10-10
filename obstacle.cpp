@@ -33,7 +33,7 @@ void Obstacle::CollisionUpdate(bool is_collision) {
 
 void Obstacle::deceaseSpeed(int newSpeed){
     this->speed = newSpeed;
-    std::cout << "The Speed equal to 2 now" << std::endl;
+    //std::cout << "The Speed equal to 2 now" << std::endl;
 }
 
 

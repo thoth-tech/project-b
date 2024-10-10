@@ -5,11 +5,12 @@
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
-#include "Observer.h"
-#include "Subject.h"
+#include "RAIN.h"
+#include "BEE_PLAYER.h"
 #include <iostream>
 #include <memory>
-//skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
+#include "GameManager.h"
+//skm g++ program.cpp player.cpp  obstacle.cpp GameManager.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
@@ -35,9 +36,9 @@ void update_timer();
 void display_timer();
 void display_start_screen();
 void player_move(Player* player);
-void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer);
-void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player);
-void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player);
+void Spawn_obstacle(GameManager& gameManager, int& spawn_timer);
+void render(GameManager& gameManager, Player& player);
+void check_game_over(GameManager& gameManager,Player& player);
 void display_game_over_screen();
 
 void start_game() {
@@ -64,52 +65,20 @@ void display_start_screen() {
     draw_text("Press SPACE to Start", COLOR_BLACK, "Arial", 200, 550, 200);
 }
 
-void check_game_over(std::vector<std::unique_ptr<Obstacle>>& obstacles,Player& player) {
+void check_game_over(GameManager& gameManager,Player& player) {
     if (Player::get_HP() == 1) {
-        player.notify_all_observers();
+        player.notify_all_RAINs();
     }
     else if (Player::get_HP() <= 0) {
         game_over = true;
         game_started = false;  // Stop the game
-        obstacles.clear(); 
+        gameManager.clear_Obstacles();
     }
 }
 
 void display_game_over_screen() {
     draw_text("Game Over!", COLOR_RED, "Arial", 48, 510, 450);
     draw_text("Press SPACE to Restart", COLOR_WHITE, "Arial", 32, 510, 500);
-}
-
-template <typename T, typename U>
-bool is_colliding(T& obj1, U& obj2) {
-    float x1 = obj1.get_x();
-    float y1 = obj1.get_y();
-    float w1 = obj1.get_width();
-    float h1 = obj1.get_height();
-
-    float x2 = obj2.get_x();
-    float y2 = obj2.get_y();
-    float w2 = obj2.get_width();
-    float h2 = obj2.get_height();
-
-    // Check for collision
-    return (x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2);
-}
-
-// Function to handle collision between two objects
-template <typename T, typename U>
-void handle_collision(T& subject, U& observer) {
-    if (is_colliding(subject, observer)) {
-        if (!observer.get_collision()) { // Collision started
-            subject.notify(&observer, true);
-            Player::set_HP(Player::get_HP()-1); // Decrease player health on collision
-        }
-        draw_text("Collision detected!", COLOR_BLACK, "Arial", 24, subject.get_x() + 10, subject.get_y() - 50);
-    } else {
-        if (observer.get_collision()) { // Collision ended
-            subject.notify(&observer, false);
-        }
-    }
 }
 
 void player_move(Player* player) {
@@ -121,19 +90,19 @@ void player_move(Player* player) {
     }
 }
 
-void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer) {
+void Spawn_obstacle(GameManager& gameManager, int& spawn_timer) {
     spawn_timer++;
     if (spawn_timer >= spawn_interval) {
         spawn_timer = 0;
         int spawn_x = rand() % RIGHT_BOUNDARY;  // Random x-coordinate between 0 and RIGHT_BOUNDARY
-        auto newObstacle = std::make_unique<Obstacle>(spawn_x, 0, 2);
-        player->attach(newObstacle.get());  // Attach the newly created obstacle
-        obstacles.push_back(std::move(newObstacle));  // Move the smart pointer into the vector
+        std::shared_ptr<Obstacle> obstacle = std::make_shared<Obstacle>(spawn_x, 0, 2);
+        gameManager.addObstacle(obstacle);
+
     }
 }
 
 
-void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
+void render(GameManager& gameManager,Player& player) {
     // Redrawing the bitmap after every clear background and bee
     double center_x = player.get_x()+(player.get_width()/2);
     double center_y = player.get_y()+(player.get_height()/2);
@@ -149,14 +118,7 @@ void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player) {
     // Draw the circle for debugging
     draw_circle(COLOR_RED,scaled_bee_circle); 
 
-    // Update and draw obstacles
-    for (const auto& obstacle_ptr : obstacles) {
-        // Dereference the unique_ptr to access the Obstacle object
-        Obstacle& obstacle = *obstacle_ptr;
-        obstacle.update();
-        obstacle.draw();
-        handle_collision(player, obstacle);
-    }
+    gameManager.updateGameObjects();
 }
 
 
@@ -164,8 +126,10 @@ int main() {
     open_window("BeeFall", WINDOW_WIDTH, WINDOW_HEIGHT);  // Named window beefall and window size
     hide_mouse();  // Hide mouse while cursor is over the game window
     Player player(player_posx, player_posy, 10.0f);  // Initialize player
-    std::vector<std::unique_ptr<Obstacle>> obstacles;  // List of obstacles
-    
+    // Create game manager and add game objects
+    GameManager gameManager;
+    gameManager.setPlayer(&player);
+
     // Timer for obstacle spawning
     int spawn_timer = 0;
 
@@ -203,15 +167,19 @@ int main() {
         player_move(&player);
 
         // Spawn obstacles
-        Spawn_obstacle(obstacles, &player, spawn_timer);
+        Spawn_obstacle(gameManager, spawn_timer);
+        
+
 
         // Render game objects
-        render(obstacles, player);
+        render(gameManager,player);
 
+        gameManager.checkCollisions();
         // Update game elements
+        
         update_timer();
         display_timer();
-        check_game_over(obstacles,player);
+        check_game_over(gameManager,player);
 
         refresh_screen(60);
     }

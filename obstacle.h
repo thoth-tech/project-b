@@ -2,9 +2,9 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 
-#include"Observer.h"
+#include "RAIN.h"  
 #include "player.h"
-class Obstacle : public Observer {
+class Obstacle : public RAIN {
 public:
     Obstacle(float x, float y,int speed);
     float get_x() { return x; }
