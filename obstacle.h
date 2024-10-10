@@ -15,7 +15,7 @@ public:
     void update();
     void draw();
     void CollisionUpdate(bool is_collision);
-    void deceaseSpeed(int newSpeed);
+    
 
 private:
     float x, y, width, height, speed;
