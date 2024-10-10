@@ -1,19 +1,21 @@
 // import
 #include "splashkit.h"
 #include "globals.h" // <- added this import
-//#include <graphics.h>
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
 #include "Observer.h"
 #include "Subject.h"
 #include <iostream>
-#include <memory>
-//skm g++ program.cpp player.cpp  obstacle.cpp -o game.exe
+#include "bullet_factory.h"
+#include <vector>
+#include <cmath>
+//skm g++ program.cpp player.cpp obstacle.cpp bullet_factory.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
-bitmap box = bitmap_named("images/box.png");
+bitmap box = bitmap_named("images/raindrop2.png");
+bitmap bullet = bitmap_named("images/pollen.png");
 float player_posx = 550.0f;
 float player_posy = 650.0f;
 int RIGHT_BOUNDARY = 1200;

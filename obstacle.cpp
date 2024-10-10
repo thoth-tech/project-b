@@ -17,7 +17,12 @@ void Obstacle::update(){
 }
 
 void Obstacle::draw() {
-   draw_bitmap(box, x, y, option_to_screen());
+    double center_x = this->x + this->width/2;
+    double center_y = this->y + this->height/2;
+    point_2d box_position = point_at(center_x,center_y);
+    circle scaled_box_circle = bitmap_cell_circle(box, box_position,1);
+    draw_bitmap(box, x, y, option_to_screen());
+    draw_circle(COLOR_RED,scaled_box_circle); 
 }
 
 void Obstacle::CollisionUpdate(bool is_collision) {
