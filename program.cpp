@@ -1,27 +1,39 @@
 // import
 #include "splashkit.h"
-#include "globals.h" // <- added this import
+#include "globals.h"  // Keep this from HEAD
 #include <cstdlib>
 #include "player.h"
 #include "obstacle.h"
 #include "Observer.h"
 #include "Subject.h"
 #include <iostream>
-#include "bullet_factory.h"
+#include "bullet_factory.h"  // Keep this from HEAD
+#include <memory>  // Keep this from origin/main
 #include <vector>
 #include <cmath>
+
 //skm g++ program.cpp player.cpp obstacle.cpp bullet_factory.cpp -o game.exe
 
 bitmap background = bitmap_named("images/Background.jpg");
 bitmap bee = bitmap_named("images/Bee.png");
 bitmap box = bitmap_named("images/box.png");
-bitmap bullet = bitmap_named("images/bullet.png");
-float player_posx = 480.0f;
-float player_posy = 550.0f;
-int RIGHT_BOUNDARY = 1020;
+bitmap bullet = bitmap_named("images/bullet.png");  // Keep this from HEAD
+
+float player_posx = 550.0f;  // Keep the updated player position from origin/main
+float player_posy = 650.0f;  // Keep this from origin/main
+int RIGHT_BOUNDARY = 1200;   // Keep the updated RIGHT_BOUNDARY from origin/main
 int LEFT_BOUNDARY = 0;
 int GRAVITY = 3;
-int spawn_interval = 60;// Spawn obstacles at a rate of 1 per second
+int spawn_interval = 60;     // This is the same in both branches
+int WINDOW_WIDTH = 1280;     // Keep additional variables from origin/main
+int WINDOW_HEIGHT = 960;
+float BEE_SCALE = 0.6;
+
+bool game_started = false;   // Keep these from origin/main
+bool game_over = false;
+int game_time = 0;
+timer my_timer;
+
 
 template <typename T, typename U>
 bool is_colliding(T& obj1, U& obj2) {
@@ -57,124 +69,112 @@ void handle_collision(T& subject, U& observer) {
     }
 }
 
-// void player_move(Player* player){
-//     if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
-//         player->move_right();
-//     }
-//     if (key_down(LEFT_KEY) && player->get_x() >= LEFT_BOUNDARY) {
-//         player->move_left();
-//     }
-// }
-// void Spawn_obstacle(std::vector<Obstacle>* obstacles,Player* player,int& spawn_timer){
-//     spawn_timer++;
-//     if (spawn_timer >= spawn_interval)
-//     {
-//         spawn_timer = 0;
-//         int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
-//         Obstacle newObstacle(spawn_x, 0,2);
-//         obstacles->push_back(newObstacle);
-//         player->attach(&newObstacle); // Attach player observer to new obstacle
-//     }
-// }
+void player_move(Player* player) {
+    if (key_down(RIGHT_KEY) && player->get_x() <= RIGHT_BOUNDARY) {
+        player->move_right();
+    }
+    if (key_down(LEFT_KEY) && player->get_x() >= LEFT_BOUNDARY) {
+        player->move_left();
+    }
+}
 
-// void render(std::vector<Obstacle>& obstacles,Player& player){
-//     //redrawing the bitmap after every clear background and bee
-//     draw_bitmap(background, 0 , 0 , option_to_screen());
-//     draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
+// Keep the bullet shooting logic from HEAD
+void shoot_bullets(Player& player, std::vector<sprite>& bullets) {
+    if (key_typed(SPACE_KEY)) {
+        point_2d origin = point_at(player.get_x(), player.get_y()); // Adjust based on player sprite size
+        vector_2d direction = vector_to(0, -1);  // Shoot upwards
+        int bulletCount = 5;
+        float spreadAngle = 45 * (std::atan(1) * 4 / 180);  // 45 degrees in radians
 
-//     // Update and draw obstacles
-//     for (Obstacle& obstacle : obstacles) {
-//         obstacle.update();
-//         obstacle.draw();
-//         handle_collision(player, obstacle);
-//     }
-// }
+        std::vector<sprite> newBullets = BulletFactory::SprayProjectiles(ProjectileType::NORMAL, origin, direction, bulletCount, spreadAngle);
+        bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
 
-int main()
-{
-    open_window("BeeFall", 1280, 960); //named window beefall and window size
-    hide_mouse(); // hide mouse while cursor is over game window
-    Player player(480.0f, 550.0f, 10.0f); // initialize player
-    std::vector<Obstacle> obstacles; // list of obstacle
-    std::vector<sprite> bullets;
+        std::cout << "Created " << newBullets.size() << " bullets" << std::endl;
+    }
+}
 
-    // Check if bullet bitmap is loaded correctly
-    if (!bitmap_valid(bullet)) {
-        std::cout << "Error: Could not load bullet bitmap" << std::endl;
-        return 1;
+void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer) {
+    spawn_timer++;
+    if (spawn_timer >= spawn_interval) {
+        spawn_timer = 0;
+        int spawn_x = rand() % RIGHT_BOUNDARY;  // Random x-coordinate between 0 and RIGHT_BOUNDARY
+        auto newObstacle = std::make_unique<Obstacle>(spawn_x, 0, 2);
+        player->attach(newObstacle.get());  // Attach the newly created obstacle
+        obstacles.push_back(std::move(newObstacle));  // Move the smart pointer into the vector
+    }
+}
+
+void render(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player& player, std::vector<sprite>& bullets) {
+    // Redraw background and bee
+    double center_x = player.get_x() + (player.get_width() / 2);
+    double center_y = player.get_y() + (player.get_height() / 2);
+    draw_bitmap(background, 0, 0, option_to_screen());
+    drawing_options scale_options = option_scale_bmp(BEE_SCALE + 0.1, BEE_SCALE + 0.1);
+    draw_bitmap(bee, player.get_x() - 50, player.get_y() - 50, scale_options);
+
+    // Draw obstacles
+    for (const auto& obstacle_ptr : obstacles) {
+        Obstacle& obstacle = *obstacle_ptr;
+        obstacle.update();
+        obstacle.draw();
+        handle_collision(player, obstacle);
     }
 
+    // Draw bullets
+    for (auto it = bullets.begin(); it != bullets.end();) {
+        update_sprite(*it);
+        if (sprite_y(*it) < -50 || sprite_y(*it) > WINDOW_HEIGHT || sprite_x(*it) < -50 || sprite_x(*it) > WINDOW_WIDTH) {
+            free_sprite(*it);
+            it = bullets.erase(it);
+        } else {
+            draw_sprite(*it);
+            ++it;
+        }
+    }
+}
+
+
+int main() {
+    open_window("BeeFall", WINDOW_WIDTH, WINDOW_HEIGHT);  // Named window beefall and window size
+    hide_mouse();  // Hide mouse while cursor is over the game window
+    Player player(player_posx, player_posy, 10.0f);  // Initialize player
+    std::vector<std::unique_ptr<Obstacle>> obstacles;  // List of obstacles
+    std::vector<sprite> bullets;  // List of bullets
+
     int spawn_timer = 0;
-    
-    while (!quit_requested())
-    {
+    my_timer = create_timer("GameTimer");
+
+    while (!quit_requested()) {
         process_events();
         clear_screen();
-        
-        if (key_down(RIGHT_KEY) && player.get_x() <= RIGHT_BOUNDARY) {
-            player.move_right();
-        }
-        if (key_down(LEFT_KEY) && player.get_x() >= LEFT_BOUNDARY) {
-            player.move_left();
-        }
-        
-        // Shoot bullets when spacebar is pressed
-        if (key_typed(SPACE_KEY)) {
-            point_2d origin = point_at(player.get_x(), player.get_y()); // Adjust based on player sprite size
-            vector_2d direction = vector_to(0, -1); // Shoot upwards
-            int bulletCount = 5;
-            float spreadAngle = 45 * (std::atan(1) * 4 / 180); // 45 degrees in radians
-            
-            std::vector<sprite> newBullets = BulletFactory::SprayProjectiles(ProjectileType::NORMAL, origin, direction, bulletCount, spreadAngle);
-            bullets.insert(bullets.end(), newBullets.begin(), newBullets.end());
-            
-            std::cout << "Created " << newBullets.size() << " bullets" << std::endl;
-        }
 
-        // Spawn obstacle at a random x-coordinate
-        spawn_timer++;
-        if (spawn_timer >= spawn_interval)
-        {
-            spawn_timer = 0;
-            int spawn_x = rand() % RIGHT_BOUNDARY; // Random x-coordinate between 0 and RIGHT_BOUNDARY
-            Obstacle newObstacle(spawn_x, 0,2);
-            obstacles.push_back(newObstacle);
-            player.attach(&newObstacle); // Attach player observer to new obstacle
-        }
-
-        //redrawing the bitmap after every clear background and bee
-        draw_bitmap(background, 0 , 0 , option_to_screen());
-        draw_bitmap(bee, player.get_x(), player.get_y(), option_to_screen());
-
-        // Update and draw obstacles
-        for (Obstacle& obstacle : obstacles) {
-            obstacle.update();
-            obstacle.draw();
-            handle_collision(player, obstacle);
-        }
-
-        // Update and draw bullets
-        for (auto it = bullets.begin(); it != bullets.end();) {
-            update_sprite(*it);
-            
-            // Remove bullets that are off-screen
-            if (sprite_y(*it) < -50 || sprite_y(*it) > 1010 || sprite_x(*it) < -50 || sprite_x(*it) > 1330) {
-                free_sprite(*it);
-                it = bullets.erase(it);
-            } else {
-                draw_sprite(*it);
-                
-                // Debug: Draw a red circle around each bullet
-                point_2d bullet_pos = sprite_position(*it);
-                fill_circle(COLOR_RED, bullet_pos.x+100, bullet_pos.y+180, 5);
-                
-                ++it;
+        if (!game_started) {
+            draw_bitmap(background, 0, 0, option_to_screen());
+            display_start_screen();
+            if (key_down(SPACE_KEY)) {
+                start_game();
             }
+            refresh_screen(60);
+            continue;
         }
 
-        // Debug: Display bullet count
-        //draw_text("Bullets: " + std::to_string(bullets.size()), COLOR_WHITE, 10, 10);
-        
+        if (game_over) {
+            display_game_over_screen();
+            if (key_down(SPACE_KEY)) {
+                start_game();
+            }
+            refresh_screen(60);
+            continue;
+        }
+
+        player_move(&player);
+        Spawn_obstacle(obstacles, &player, spawn_timer);
+        shoot_bullets(player, bullets);
+        render(obstacles, player, bullets);
+
+        update_timer();
+        display_timer();
+        check_game_over(obstacles, player);
 
         refresh_screen(60);
     }
