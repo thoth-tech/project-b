@@ -90,7 +90,7 @@ void player_move(Player* player) {
     }
 }
 
-void Spawn_obstacle(GameManager& gameManager, int& spawn_timer) {
+void Spawn_obstacle(std::vector<std::unique_ptr<Obstacle>>& obstacles, Player* player, int& spawn_timer) {
     spawn_timer++;
     if (spawn_timer >= spawn_interval) {
         spawn_timer = 0;
